@@ -1,0 +1,87 @@
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { isTokenExpired, clearAuthAndRedirect } from './utils';
+
+interface DashboardStats {
+  contentTypes: {
+    value: number;
+    change: string;
+    changeType: 'positive' | 'negative' | 'neutral';
+  };
+  entries: {
+    value: number;
+    change: string;
+    changeType: 'positive' | 'negative' | 'neutral';
+  };
+  users: {
+    value: number;
+    change: string;
+    changeType: 'positive' | 'negative' | 'neutral';
+  };
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'content' | 'user';
+  action: string;
+  contentType?: string;
+  item: string;
+  time: string;
+}
+
+class DashboardAPI {
+  private api: AxiosInstance;
+  private baseURL: string;
+
+  constructor() {
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    
+    this.api = axios.create({
+      baseURL: this.baseURL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Add request interceptor to include auth token and check expiry
+    this.api.interceptors.request.use((config) => {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        if (isTokenExpired(token)) {
+          console.warn('[DashboardAPI] Token expired, clearing auth and redirecting to login');
+          clearAuthAndRedirect('Your session has expired. Please log in again.');
+          return Promise.reject(new Error('Token expired'));
+        }
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
+    // Add response interceptor to handle auth errors
+    this.api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          console.warn('[DashboardAPI] Received 401 Unauthorized, clearing auth and redirecting');
+          clearAuthAndRedirect('Your session has expired. Please log in again.');
+        }
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  async getStats(): Promise<DashboardStats> {
+    const response: AxiosResponse<DashboardStats> = await this.api.get('/api/dashboard/stats');
+    console.log('api/dashboard/stats response..........................',response);
+    return response.data;
+  }
+
+  async getRecentActivity(limit: number = 10): Promise<RecentActivity[]> {
+    const response: AxiosResponse<RecentActivity[]> = await this.api.get('/api/dashboard/recent-activity', {
+      params: { limit },
+    });
+    return response.data;
+  }
+}
+
+export const dashboardAPI = new DashboardAPI();
+export type { DashboardStats, RecentActivity };
