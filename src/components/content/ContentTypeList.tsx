@@ -45,7 +45,9 @@ export default function ContentTypeList() {
       setContentTypes(contentTypes);
       setLoading(false);
     } catch (err: any) {
-      setError('Failed to fetch content types');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch content types';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching content types:', err);
     } finally {
       setLoading(false);
@@ -167,7 +169,9 @@ export default function ContentTypeList() {
       handleCloseModal();
     } catch (err: any) {
       console.error('Error creating content type:', err);
-      setFormError(err.response?.data?.message || err.message || 'Failed to create content type');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to create content type';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setFormError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
     } finally {
       setCreating(false);
     }

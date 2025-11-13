@@ -9,7 +9,6 @@ import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
 import { 
-  DocumentDuplicateIcon,
   TrashIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
@@ -115,7 +114,9 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
         reset({});
       }
     } catch (err: any) {
-      setError('Failed to fetch data');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch data';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
@@ -154,22 +155,12 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
         setContentItem(response.data);
       }
     } catch (err: any) {
-      setError('Failed to save content');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to save content';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error saving content:', err);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDuplicate = async () => {
-    if (!contentItem) return;
-    
-    try {
-      const duplicated = await contentAPI.duplicateContentItem(contentType, contentItem.id.toString());
-      // Redirect to the new duplicated item
-      window.location.href = `/content-builder/${contentType}/${duplicated.data.id}`;
-    } catch (err) {
-      console.error('Error duplicating item:', err);
     }
   };
 
@@ -180,7 +171,10 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
       await contentAPI.deleteContentItem(contentType, contentItem.documentId.toString());
       // Redirect to content list
       window.location.href = `/content-manager/${contentType}`;
-    } catch (err) {
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to delete content';
+      const statusCode = err?.statusCode || err?.response?.status;
+      alert(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error deleting item:', err);
     }
   };
@@ -375,14 +369,6 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
           <div className="flex items-center space-x-2">
             {!isNewItem && contentItem && (
               <>
-                <button
-                  onClick={handleDuplicate}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                  disabled={!canEdit}
-                >
-                  <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-                  Duplicate
-                </button>
                 {(isAdmin || (isAuthor && canEdit)) && (
                   <button
                     onClick={handleDelete}

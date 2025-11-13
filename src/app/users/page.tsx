@@ -28,7 +28,9 @@ export default function UsersPage() {
         setUsers([]);
       }
     } catch (err: any) {
-      setError('Failed to fetch users');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch users';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching users:', err);
     } finally {
       setLoading(false);

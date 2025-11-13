@@ -12,6 +12,7 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
+import { getRoleDisplayName } from '@/types/roles';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -36,7 +37,9 @@ export default function Sidebar() {
               <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">Strapi Admin</span>
+              <span className="ml-2 text-lg font-semibold text-gray-900">
+                {user?.role ? getRoleDisplayName(user.role) : 'Admin'}
+              </span>
             </div>
             <button
               type="button"
@@ -101,7 +104,7 @@ export default function Sidebar() {
             <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">S</span>
             </div>
-            <span className="ml-2 text-lg font-semibold text-gray-900">Strapi Admin</span>
+            <span className="ml-2 text-lg font-semibold text-gray-900">Strapi   {user?.role ? getRoleDisplayName(user.role) : 'Admin'}</span>
           </div>
           <nav className="flex-1 px-4 py-4 space-y-1">
             {navigation.map((item) => {

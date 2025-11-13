@@ -19,6 +19,7 @@ export const USER_ROLES = Object.values(UserRole);
  * Get role display name
  */
 export function getRoleDisplayName(role: string | undefined): string {
+  console.log('role..........................', role);
   const roleMap: Record<string, string> = {
     [UserRole.ADMIN]: 'Administrator',
     [UserRole.EDITOR]: 'Editor',

@@ -12,7 +12,6 @@ import {
   PencilIcon,
   TrashIcon,
   EyeIcon,
-  DocumentDuplicateIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
@@ -77,7 +76,9 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
         console.log('No content items found or invalid response format');
       }
     } catch (err: any) {
-      setError('Failed to fetch content items');
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch content items';
+      const statusCode = err?.statusCode || err?.response?.status;
+      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching content items:', err);
       setContentItems([]); // Set empty array on error
     } finally {
@@ -109,18 +110,109 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
       try {
         await contentAPI.deleteContentItem(contentType, id);
         setContentItems(prev => prev.filter(item => item.documentId !== id));
-      } catch (err) {
+        // Remove from selected items if it was selected
+        setSelectedItems(prev => prev.filter(itemId => {
+          const item = contentItems.find(ci => ci.documentId === id);
+          return item ? itemId !== item.id : true;
+        }));
+      } catch (err: any) {
+        const errorMessage = err?.message || err?.response?.data?.message || 'Failed to delete content';
+        const statusCode = err?.statusCode || err?.response?.status;
+        alert(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
         console.error('Error deleting item:', err);
       }
     }
   };
 
-  const handleDuplicate = async (id: number) => {
+  const handleDeleteSelected = async () => {
+    if (selectedItems.length === 0) return;
+    
+    const count = selectedItems.length;
+    if (!confirm(`Are you sure you want to delete ${count} item${count > 1 ? 's' : ''}?`)) {
+      return;
+    }
+
     try {
-      const duplicated = await contentAPI.duplicateContentItem(contentType, id.toString());
-      setContentItems(prev => [...prev, duplicated.data]);
-    } catch (err) {
-      console.error('Error duplicating item:', err);
+      // Get the items to delete
+      const itemsToDelete = contentItems.filter(item => selectedItems.includes(item.id));
+      
+      // For author role, check ownership before deleting
+      if (isAuthor) {
+        const itemsToCheck = itemsToDelete.map(item => ({
+          item,
+          contentId: item.documentId || String(item.id),
+        }));
+        
+        // Check ownership for all items
+        const ownershipChecks = await Promise.all(
+          itemsToCheck.map(async ({ contentId }) => {
+            try {
+              const ownership = await contentAPI.checkContentOwnership(contentType, contentId);
+              return ownership.isOwner;
+            } catch (err) {
+              console.error(`Failed to check ownership for ${contentId}:`, err);
+              return false;
+            }
+          })
+        );
+        
+        // Filter out items that author doesn't own
+        const deletableItems = itemsToCheck.filter((_, index) => ownershipChecks[index]);
+        
+        if (deletableItems.length === 0) {
+          alert('You can only delete your own content. None of the selected items belong to you.');
+          return;
+        }
+        
+        if (deletableItems.length < itemsToCheck.length) {
+          const notOwnedCount = itemsToCheck.length - deletableItems.length;
+          if (!confirm(`${notOwnedCount} of the selected items don't belong to you and will be skipped. Continue deleting ${deletableItems.length} item${deletableItems.length > 1 ? 's' : ''}?`)) {
+            return;
+          }
+        }
+        
+        // Delete only items owned by author
+        const deletePromises = deletableItems.map(({ contentId }) =>
+          contentAPI.deleteContentItem(contentType, contentId).catch(err => {
+            console.error(`Failed to delete ${contentId}:`, err);
+            return { error: true, contentId };
+          })
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Update state - remove deleted items
+        const deletedContentIds = deletableItems.map(({ contentId }) => contentId);
+        setContentItems(prev => prev.filter(item => !deletedContentIds.includes(item.documentId || String(item.id))));
+        setSelectedItems([]);
+      } else {
+        // For admin/editor, delete all selected items
+        const deletePromises = itemsToDelete.map(item => {
+          const contentId = item.documentId || String(item.id);
+          return contentAPI.deleteContentItem(contentType, contentId).catch(err => {
+            console.error(`Failed to delete ${contentId}:`, err);
+            return { error: true, contentId };
+          });
+        });
+        
+        const results = await Promise.all(deletePromises);
+        
+        // Check if any deletions failed
+        const failedDeletions = results.filter(r => r && typeof r === 'object' && 'error' in r);
+        if (failedDeletions.length > 0) {
+          console.warn(`${failedDeletions.length} item(s) failed to delete`);
+        }
+        
+        // Update state - remove successfully deleted items
+        const deletedContentIds = itemsToDelete.map(item => item.documentId || String(item.id));
+        setContentItems(prev => prev.filter(item => !deletedContentIds.includes(item.documentId || String(item.id))));
+        setSelectedItems([]);
+      }
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to delete selected items';
+      const statusCode = err?.statusCode || err?.response?.status;
+      alert(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
+      console.error('Error deleting selected items:', err);
     }
   };
 
@@ -170,10 +262,13 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
               <span className="ml-2 text-sm text-gray-600">
                 {selectedItems.length} of {contentItems.length} selected
               </span>
-              {selectedItems.length > 0 && isAdmin && (
+              {selectedItems.length > 0 && !isViewer && (
                 <div className="ml-4 flex space-x-2">
-                  <button className="text-sm text-red-600 hover:text-red-900">
-                    Delete Selected
+                  <button 
+                    onClick={handleDeleteSelected}
+                    className="text-sm text-red-600 hover:text-red-900 font-medium"
+                  >
+                    Delete Selected ({selectedItems.length})
                   </button>
                 </div>
               )}
@@ -225,14 +320,6 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                       
                       return (
                         <>
-                          <button
-                            onClick={() => handleDuplicate(item.id)}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="Duplicate"
-                            disabled={isAuthor && !canEdit}
-                          >
-                            <DocumentDuplicateIcon className="h-4 w-4" />
-                          </button>
                           <Link
                             href={`/content-builder/${contentType}/${item.documentId}`}
                             className="text-gray-400 hover:text-gray-600"

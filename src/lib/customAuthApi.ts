@@ -32,13 +32,26 @@ class CustomAuthAPI {
       return config;
     });
 
-    // Add response interceptor to handle auth errors
+    // Add response interceptor to handle auth errors and preserve error messages
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
           console.warn('[AuthAPI] Received 401 Unauthorized, clearing auth and redirecting');
           clearAuthAndRedirect('Your session has expired. Please log in again.');
+        }
+        // Preserve error response with message and status code
+        // NestJS returns errors in format: { statusCode: number, message: string }
+        if (error.response?.data) {
+          const errorData = error.response.data;
+          // Extract message from NestJS error format or Strapi error format
+          if (errorData.message) {
+            error.message = Array.isArray(errorData.message) 
+              ? errorData.message.join(', ') 
+              : errorData.message;
+          }
+          // Preserve status code
+          error.statusCode = error.response.status;
         }
         return Promise.reject(error);
       }
