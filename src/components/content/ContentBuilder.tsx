@@ -8,7 +8,7 @@ import { contentAPI } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
-import { 
+import {
   TrashIcon,
   ArrowLeftIcon
 } from '@heroicons/react/24/outline';
@@ -33,7 +33,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
   const [canEdit, setCanEdit] = useState(true);
   const [isNewItem] = useState(!contentId);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm();
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
 
   useEffect(() => {
     // Redirect Viewer users away from create/edit pages
@@ -42,27 +42,28 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
       return;
     }
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType, contentId, isViewer, router]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError('');
-      
+
       // Fetch content type schema
       const schema = await contentAPI.getContentType(contentType);
       console.log('schema..........................', schema);
-      
+
       setContentTypeSchema(schema);
-      
+
       // If editing existing item, fetch the item data
       if (contentId && contentId !== 'new') {
-        console.log('contentId..........................',contentId);
+        console.log('contentId..........................', contentId);
 
         const item = await contentAPI.getContentItem(contentType, contentId);
         console.log('item response..........................', item);
         console.log('item.data..........................', item.data);
-        
+
         // item.data is already the ContentItem object (not an array)
         // getContentItem returns: { data: ContentItem }
         const contentItemData = item.data;
@@ -87,7 +88,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
         // Exclude system fields (id, documentId, createdAt, updatedAt, publishedAt)
         const systemFields = ['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'];
         const formValues: Record<string, any> = {};
-        
+
         // Only include fields that are in the content type schema
         if (schema?.attributes) {
           Object.keys(schema.attributes).forEach((fieldName) => {
@@ -103,9 +104,9 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
             }
           });
         }
-        
+
         console.log('Form values to reset:', formValues);
-        
+
         // Use reset() to properly initialize form with all values at once
         // This ensures the form fields show the pre-filled data
         reset(formValues);
@@ -131,7 +132,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
       // Filter data to only include fields that are in the content type schema
       // This ensures we only send the fields that are defined in the schema
       let filteredData: Record<string, any> = {};
-      
+
       if (contentTypeSchema?.attributes) {
         Object.keys(contentTypeSchema.attributes).forEach((fieldName) => {
           if (data[fieldName] !== undefined && data[fieldName] !== null && data[fieldName] !== '') {
@@ -364,7 +365,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
             )}
           </div>
         </div>
-        
+
         {!isViewer && canEdit && (
           <div className="flex items-center space-x-2">
             {!isNewItem && contentItem && (
@@ -394,7 +395,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div className="grid grid-cols-1 gap-6">
-              {contentTypeSchema?.attributes && Object.entries(contentTypeSchema.attributes).map(([fieldName, fieldConfig]) => 
+              {contentTypeSchema?.attributes && Object.entries(contentTypeSchema.attributes).map(([fieldName, fieldConfig]) =>
                 renderField(fieldName, fieldConfig)
               )}
             </div>
@@ -426,4 +427,3 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
     </div>
   );
 }
-

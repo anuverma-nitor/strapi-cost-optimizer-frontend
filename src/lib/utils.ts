@@ -52,7 +52,7 @@ export function slugify(text: string): string {
 /**
  * Decode JWT token without verification (for reading expiry)
  */
-export function decodeJWT(token: string): any | null {
+export function decodeJWT(token: string): { exp?: number; [key: string]: unknown } | null {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -62,8 +62,8 @@ export function decodeJWT(token: string): any | null {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    return JSON.parse(jsonPayload);
-  } catch (error) {
+    return JSON.parse(jsonPayload) as { exp?: number; [key: string]: unknown };
+  } catch {
     return null;
   }
 }
@@ -79,7 +79,7 @@ export function isTokenExpired(token: string): boolean {
     }
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp < currentTime;
-  } catch (error) {
+  } catch {
     return true; // If error decoding, consider expired
   }
 }
@@ -95,7 +95,7 @@ export function getTokenExpiryTime(token: string): number | null {
     }
     const currentTime = Math.floor(Date.now() / 1000);
     return decoded.exp - currentTime;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

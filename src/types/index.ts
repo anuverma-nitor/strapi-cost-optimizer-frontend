@@ -23,7 +23,7 @@ export interface ContentType {
   pluralName?: string;
   displayName: string;
   description?: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,7 +35,7 @@ export interface ContentItem {
   updatedAt: string;
   publishedAt?: string;
   // Dynamic fields from content type schema (e.g., name, description, likes, etc.)
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ApiResponse<T> {

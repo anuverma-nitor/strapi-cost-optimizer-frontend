@@ -76,16 +76,23 @@ class ContentAPI {
     displayName: string;
     description?: string;
     kind?: 'collectionType' | 'singleType';
-    attributes?: Record<string, any>;
+    attributes?: Record<string, unknown>;
   }): Promise<ContentType> {
     const response: AxiosResponse<ApiResponse<ContentType>> = await this.api.post('/api/content-types', data);
     return response.data.data;
   }
 
   // Content methods - calls to your custom backend
-  async getContentItems(contentType: string, params?: Record<string, any>): Promise<ApiResponse<ContentItem[]>> {
+  async getContentItems(contentType: string, params?: Record<string, unknown>): Promise<ApiResponse<ContentItem[]>> {
     // Backend will automatically add 'status': 'draft' to include both published and draft content
-    const queryParams = params ? new URLSearchParams(params).toString() : '';
+    const queryParams = params 
+      ? new URLSearchParams(
+          Object.entries(params).reduce((acc, [key, value]) => {
+            acc[key] = String(value ?? '');
+            return acc;
+          }, {} as Record<string, string>)
+        ).toString()
+      : '';
     const url = queryParams ? `/api/${contentType}?${queryParams}` : `/api/${contentType}`;
     const response: AxiosResponse<ApiResponse<ContentItem[]>> = await this.api.get(url);
     return response.data;
@@ -96,12 +103,12 @@ class ContentAPI {
     return response.data;
   }
 
-  async createContentItem(contentType: string, data: Record<string, any>): Promise<ApiResponse<ContentItem>> {
+  async createContentItem(contentType: string, data: Record<string, unknown>): Promise<ApiResponse<ContentItem>> {
     const response: AxiosResponse<ApiResponse<ContentItem>> = await this.api.post(`/api/${contentType}`, data);
     return response.data;
   }
 
-  async updateContentItem(contentType: string, id: string, data: Record<string, any>): Promise<ApiResponse<ContentItem>> {
+  async updateContentItem(contentType: string, id: string, data: Record<string, unknown>): Promise<ApiResponse<ContentItem>> {
     const response: AxiosResponse<ApiResponse<ContentItem>> = await this.api.put(`/api/${contentType}/${id}`, data);
     return response.data;
   }

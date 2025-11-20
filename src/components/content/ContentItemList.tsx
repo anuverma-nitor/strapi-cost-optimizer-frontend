@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ContentItem, ApiResponse } from '@/types';
+import { ContentItem } from '@/types';
 import { contentAPI } from '@/lib/api';
 import { formatDate, truncateText } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
-import { 
+import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  EyeIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
@@ -32,6 +31,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
 
   useEffect(() => {
     fetchContentItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType]);
 
   const fetchContentItems = async () => {
@@ -41,14 +41,14 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
       // This now calls your custom backend API
       const response = await contentAPI.getContentItems(contentType);
       console.log('getContentItems response..........................', response);
-      
+
       // response is ApiResponse<ContentItem[]> which has { data: ContentItem[] }
       // Ensure response.data exists and is an array
       if (response?.data && Array.isArray(response.data)) {
         const items = response.data;
         setContentItems(items);
         console.log('Content items set:', items.length);
-        
+
         // For author role, check ownership for each item
         if (isAuthor && items.length > 0) {
           const ownershipChecks = await Promise.all(
@@ -63,7 +63,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
               }
             })
           );
-          
+
           const ownershipMap: Record<string, boolean> = {};
           ownershipChecks.forEach(({ contentId, isOwner }) => {
             ownershipMap[contentId] = isOwner;
@@ -87,8 +87,8 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
   };
 
   const handleSelectItem = (id: number) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
+    setSelectedItems(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -97,10 +97,10 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
   const handleSelectAll = () => {
     // Only select all if contentItems is not empty
     if (contentItems.length === 0) return;
-    
+
     setSelectedItems(
-      selectedItems.length === contentItems.length 
-        ? [] 
+      selectedItems.length === contentItems.length
+        ? []
         : contentItems.map(item => item.id)
     );
   };
@@ -126,7 +126,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
 
   const handleDeleteSelected = async () => {
     if (selectedItems.length === 0) return;
-    
+
     const count = selectedItems.length;
     if (!confirm(`Are you sure you want to delete ${count} item${count > 1 ? 's' : ''}?`)) {
       return;
@@ -135,14 +135,14 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
     try {
       // Get the items to delete
       const itemsToDelete = contentItems.filter(item => selectedItems.includes(item.id));
-      
+
       // For author role, check ownership before deleting
       if (isAuthor) {
         const itemsToCheck = itemsToDelete.map(item => ({
           item,
           contentId: item.documentId || String(item.id),
         }));
-        
+
         // Check ownership for all items
         const ownershipChecks = await Promise.all(
           itemsToCheck.map(async ({ contentId }) => {
@@ -155,22 +155,22 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
             }
           })
         );
-        
+
         // Filter out items that author doesn't own
         const deletableItems = itemsToCheck.filter((_, index) => ownershipChecks[index]);
-        
+
         if (deletableItems.length === 0) {
           alert('You can only delete your own content. None of the selected items belong to you.');
           return;
         }
-        
+
         if (deletableItems.length < itemsToCheck.length) {
           const notOwnedCount = itemsToCheck.length - deletableItems.length;
           if (!confirm(`${notOwnedCount} of the selected items don't belong to you and will be skipped. Continue deleting ${deletableItems.length} item${deletableItems.length > 1 ? 's' : ''}?`)) {
             return;
           }
         }
-        
+
         // Delete only items owned by author
         const deletePromises = deletableItems.map(({ contentId }) =>
           contentAPI.deleteContentItem(contentType, contentId).catch(err => {
@@ -178,9 +178,9 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
             return { error: true, contentId };
           })
         );
-        
+
         await Promise.all(deletePromises);
-        
+
         // Update state - remove deleted items
         const deletedContentIds = deletableItems.map(({ contentId }) => contentId);
         setContentItems(prev => prev.filter(item => !deletedContentIds.includes(item.documentId || String(item.id))));
@@ -194,15 +194,15 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
             return { error: true, contentId };
           });
         });
-        
+
         const results = await Promise.all(deletePromises);
-        
+
         // Check if any deletions failed
         const failedDeletions = results.filter(r => r && typeof r === 'object' && 'error' in r);
         if (failedDeletions.length > 0) {
           console.warn(`${failedDeletions.length} item(s) failed to delete`);
         }
-        
+
         // Update state - remove successfully deleted items
         const deletedContentIds = itemsToDelete.map(item => item.documentId || String(item.id));
         setContentItems(prev => prev.filter(item => !deletedContentIds.includes(item.documentId || String(item.id))));
@@ -264,7 +264,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
               </span>
               {selectedItems.length > 0 && !isViewer && (
                 <div className="ml-4 flex space-x-2">
-                  <button 
+                  <button
                     onClick={handleDeleteSelected}
                     className="text-sm text-red-600 hover:text-red-900 font-medium"
                   >
@@ -274,7 +274,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
               )}
             </div>
           </div>
-          
+
           <ul className="divide-y divide-gray-200">
             {contentItems.map((item) => (
               <li key={item.id} className="hover:bg-gray-50">
@@ -289,7 +289,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                     <div className="ml-4 flex-1">
                       <div className="flex items-center">
                         <h3 className="text-sm font-medium text-gray-900">
-                          {item.name || item.title || `Item ${item.id}`}
+                          {(item.name || item.title || `Item ${item.id}`) as React.ReactNode}
                         </h3>
                         {!item.publishedAt && (
                           <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -298,7 +298,14 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        {truncateText(item.content || item.description || '', 100)}
+                        {truncateText(
+                          typeof item.content === 'string'
+                            ? item.content
+                            : typeof item.description === 'string'
+                            ? item.description
+                            : '',
+                          100
+                        )}
                       </p>
                       <div className="mt-1 text-xs text-gray-400">
                         Updated {formatDate(item.updatedAt)}
@@ -308,16 +315,16 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {!isViewer && (() => {
                       const contentId = item.documentId || String(item.id);
                       const canEdit = !isAuthor || ownershipMap[contentId] === true;
-                      
+
                       if (isAuthor && !canEdit) {
                         return null; // Author can't edit others' content
                       }
-                      
+
                       return (
                         <>
                           <Link

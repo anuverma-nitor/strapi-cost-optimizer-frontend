@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ContentType } from '@/types';
 import { contentAPI } from '@/lib/api';
-import { formatDate, capitalizeFirst } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import FieldBuilder from './FieldBuilder';
-import { 
-  DocumentTextIcon, 
-  CogIcon, 
+import {
+  DocumentTextIcon,
   PlusIcon,
   EyeIcon,
   PencilIcon,
@@ -77,7 +76,7 @@ export default function ContentTypeList() {
   // Transform fields array to attributes object format expected by backend
   const transformFieldsToAttributes = (fieldsArray: any[]): Record<string, any> => {
     const attributes: Record<string, any> = {};
-    
+
     fieldsArray.forEach((field) => {
       if (!field.name || !field.type) return;
 
@@ -153,8 +152,8 @@ export default function ContentTypeList() {
 
     try {
       const attributes = transformFieldsToAttributes(fields);
-      
-      const newContentType = await contentAPI.createContentType({
+
+      await contentAPI.createContentType({
         name: formData.name.trim(),
         displayName: formData.displayName.trim(),
         description: formData.description.trim() || undefined,
@@ -164,14 +163,26 @@ export default function ContentTypeList() {
 
       // Refresh the list
       await fetchContentTypes();
-      
+
       // Close modal
       handleCloseModal();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error creating content type:', err);
-      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to create content type';
-      const statusCode = err?.statusCode || err?.response?.status;
-      setFormError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
+      const errorMessage = err && typeof err === 'object' && 'message' in err
+        ? String((err as { message?: string }).message)
+        : err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : 'Failed to create content type';
+      const statusCode = err && typeof err === 'object' && 'statusCode' in err
+        ? (err as { statusCode?: number }).statusCode
+        : err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      setFormError(
+        statusCode
+          ? `Error ${statusCode}: ${errorMessage}`
+          : errorMessage ?? 'Failed to create content type'
+      );
     } finally {
       setCreating(false);
     }
@@ -226,7 +237,7 @@ export default function ContentTypeList() {
                   </p>
                 </div>
               </div>
-              
+
               {contentType.description && (
                 <p className="mt-2 text-sm text-gray-600">
                   {contentType.description}
@@ -302,7 +313,7 @@ export default function ContentTypeList() {
               {/* Basic Information */}
               <div className="bg-gray-50 p-4 rounded-lg space-y-4">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -339,8 +350,8 @@ export default function ContentTypeList() {
                       <option value="singleType">Single Type (One entry)</option>
                     </select>
                     <p className="mt-1 text-xs text-gray-500">
-                      {formData.kind === 'collectionType' 
-                        ? 'For content with multiple entries (e.g., Articles, Products)' 
+                      {formData.kind === 'collectionType'
+                        ? 'For content with multiple entries (e.g., Articles, Products)'
                         : 'For single entry content (e.g., Homepage, Settings)'}
                     </p>
                   </div>

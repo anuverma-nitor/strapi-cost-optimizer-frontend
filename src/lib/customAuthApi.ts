@@ -70,13 +70,20 @@ class CustomAuthAPI {
   }
 
   async logout(): Promise<void> {
+    // Clear local storage
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+    
+    // Redirect to Azure App Service Easy Auth logout
+    // This will clear the Easy Auth session and redirect
+    if (typeof window !== 'undefined') {
+      window.location.href = '/.auth/logout';
+    }
   }
 
-  async getCurrentUser(): Promise<any> {
-    const response: AxiosResponse<any> = await this.api.get('/api/auth/me');
-    return response.data;
+  async getCurrentUser(): Promise<User> {
+    const response: AxiosResponse<AuthResponse> = await this.api.get('/api/auth/me');
+    return response.data.user;
   }
 
   async getAllUsers(): Promise<ApiResponse<User[]>> {

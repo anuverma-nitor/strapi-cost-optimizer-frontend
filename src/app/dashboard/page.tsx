@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/ui/Layout';
 import {
   DocumentTextIcon,
@@ -13,7 +14,6 @@ import { dashboardAPI, DashboardStats, RecentActivity } from '@/lib/dashboardApi
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -21,7 +21,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      setLoading(true);
       setStatsLoading(true);
       setActivityLoading(true);
 
@@ -31,9 +30,12 @@ export default function DashboardPage() {
           setStats(statsData);
           setStatsError(null);
         })
-        .catch((err: any) => {
+        .catch((err: unknown) => {
           console.error('Failed to fetch stats:', err);
-          setStatsError(err.response?.data?.message || 'Failed to load statistics');
+          const errorMessage = err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+            : undefined;
+          setStatsError(errorMessage || 'Failed to load statistics');
           setStats(null);
         })
         .finally(() => {
@@ -47,9 +49,12 @@ export default function DashboardPage() {
           setRecentActivity(activityData);
           setActivityError(null);
         })
-        .catch((err: any) => {
+        .catch((err: unknown) => {
           console.error('Failed to fetch recent activity:', err);
-          setActivityError(err.response?.data?.message || 'Failed to load recent activity');
+          const errorMessage = err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+            : undefined;
+          setActivityError(errorMessage || 'Failed to load recent activity');
           setRecentActivity([]);
         })
         .finally(() => {
@@ -59,13 +64,6 @@ export default function DashboardPage() {
 
     fetchDashboardData();
   }, []);
-
-  // Update overall loading state when individual loading states change
-  useEffect(() => {
-    if (!statsLoading && !activityLoading) {
-      setLoading(false);
-    }
-  }, [statsLoading, activityLoading]);
 
   // Format number with commas
   const formatNumber = (num: number): string => {
@@ -148,7 +146,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Welcome to your Strapi admin panel. Here's what's happening with your content.
+            Welcome to your Strapi admin panel. Here&apos;s what&apos;s happening with your content.
           </p>
         </div>
 
@@ -198,7 +196,7 @@ export default function DashboardPage() {
                               {stat.value}
                             </div>
                             <div className={`ml-2 flex items-baseline text-sm font-semibold ${stat.changeType === 'positive' ? 'text-green-600' :
-                                stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+                              stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
                               }`}>
                               {stat.change}
                             </div>
@@ -293,27 +291,27 @@ export default function DashboardPage() {
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                <a
+                <Link
                   href="/content-manager"
                   className="block w-full text-left px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   <DocumentTextIcon className="h-5 w-5 inline mr-2" />
                   Manage Content
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/content-builder"
                   className="block w-full text-left px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   <CogIcon className="h-5 w-5 inline mr-2" />
                   Content Builder
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/users"
                   className="block w-full text-left px-4 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   <UserGroupIcon className="h-5 w-5 inline mr-2" />
                   Manage Users
-                </a>
+                </Link>
               </div>
             </div>
           </div>

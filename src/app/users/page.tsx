@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Layout from '@/components/ui/Layout';
-import { UserGroupIcon, PlusIcon } from '@heroicons/react/24/outline';
+// Icons removed - not used in component
 import { customAuthAPI } from '@/lib/customAuthApi';
 import { User } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -27,9 +27,17 @@ export default function UsersPage() {
       } else {
         setUsers([]);
       }
-    } catch (err: any) {
-      const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch users';
-      const statusCode = err?.statusCode || err?.response?.status;
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? String((err as { message?: string }).message)
+        : err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to fetch users'
+        : 'Failed to fetch users';
+      const statusCode = err && typeof err === 'object' && 'statusCode' in err
+        ? (err as { statusCode?: number }).statusCode
+        : err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { status?: number } }).response?.status
+        : undefined;
       setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching users:', err);
     } finally {

@@ -47,8 +47,11 @@ export default function LoginForm() {
     try {
       await login(data.identifier, data.password);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Login failed. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
+        : undefined;
+      setError(errorMessage || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

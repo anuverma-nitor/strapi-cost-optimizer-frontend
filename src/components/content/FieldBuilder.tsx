@@ -13,7 +13,7 @@ interface Field {
   type: string;
   required?: boolean;
   unique?: boolean;
-  default?: any;
+  default?: string | number | boolean;
   minLength?: number;
   maxLength?: number;
   min?: number;
@@ -123,7 +123,7 @@ export default function FieldBuilder({ fields, onFieldsChange }: FieldBuilderPro
 
         {/* Default Value */}
         {(fieldType === 'string' || fieldType === 'text' || fieldType === 'integer' || 
-          fieldType === 'float' || fieldType === 'decimal' || fieldType === 'boolean') && (
+          fieldType === 'biginteger' || fieldType === 'float' || fieldType === 'decimal' || fieldType === 'boolean') && (
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">
               Default Value
@@ -132,7 +132,7 @@ export default function FieldBuilder({ fields, onFieldsChange }: FieldBuilderPro
               type={fieldType === 'boolean' ? 'checkbox' : fieldType.includes('integer') || fieldType === 'float' || fieldType === 'decimal' ? 'number' : 'text'}
               value={field.default !== undefined ? String(field.default) : ''}
               onChange={(e) => {
-                let value: any = e.target.value;
+                let value: string | number | boolean | undefined = e.target.value;
                 if (fieldType === 'boolean') {
                   value = e.target.checked;
                 } else if (fieldType === 'integer' || fieldType === 'biginteger') {
@@ -342,7 +342,7 @@ export default function FieldBuilder({ fields, onFieldsChange }: FieldBuilderPro
       {fields.length === 0 && (
         <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
           <p className="text-sm text-gray-500">No fields added yet</p>
-          <p className="text-xs text-gray-400 mt-1">Click "Add Field" to get started</p>
+          <p className="text-xs text-gray-400 mt-1">Click &quot;Add Field&quot; to get started</p>
         </div>
       )}
 

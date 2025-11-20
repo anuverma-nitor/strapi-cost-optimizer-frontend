@@ -1,0 +1,47 @@
+{
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/8c3dad1d-b6bc-4f8b-939b-8263372eced6/v2.0", 
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "clientSecretSettingName": "AZURE_CLIENT_SECRET"
+        },
+        "userDetailsClaim": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+      }
+    }
+  },
+  "routes": [
+    {
+      "route": "/login",
+      "redirect": "/.auth/login/aad",
+      "statusCode": 302
+    },
+    {
+      "route": "/logout",
+      "redirect": "/.auth/logout",
+      "statusCode": 302
+    },
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
+  "trailingSlash": "auto",
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "/_next/*", "*.{css,scss,js,png,gif,ico,jpg,svg,woff,woff2,ttf,eot}"]
+  },
+  "responseOverrides": {
+    "401": {
+      "rewrite": "/login",
+      "statusCode": 302
+    }
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block"
+  }
+}
+
