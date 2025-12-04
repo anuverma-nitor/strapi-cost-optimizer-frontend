@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { User, ApiResponse } from '@/types';
 import { AuthResponse, LoginCredentials, RegisterCredentials } from '@/types';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
+import { addEasyAuthHeader, clearCachedPrincipal } from './easyAuthHeaders';
 
 class CustomAuthAPI {
   private api: AxiosInstance;
@@ -9,7 +10,7 @@ class CustomAuthAPI {
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
+
     this.api = axios.create({
       baseURL: this.baseURL,
       headers: {
@@ -18,7 +19,7 @@ class CustomAuthAPI {
     });
 
     // Add request interceptor to include auth token and check expiry
-    this.api.interceptors.request.use((config) => {
+    this.api.interceptors.request.use(async (config) => {
       const token = localStorage.getItem('auth_token');
       if (token) {
         // Check if token is expired before making request
@@ -29,6 +30,10 @@ class CustomAuthAPI {
         }
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // Add x-ms-client-principal header for Easy Auth
+      await addEasyAuthHeader(config);
+
       return config;
     });
 
@@ -46,8 +51,8 @@ class CustomAuthAPI {
           const errorData = error.response.data;
           // Extract message from NestJS error format or Strapi error format
           if (errorData.message) {
-            error.message = Array.isArray(errorData.message) 
-              ? errorData.message.join(', ') 
+            error.message = Array.isArray(errorData.message)
+              ? errorData.message.join(', ')
               : errorData.message;
           }
           // Preserve status code
@@ -73,10 +78,15 @@ class CustomAuthAPI {
     // Clear local storage
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
-    
+
+    // Clear cached Azure Easy Auth principal
+    clearCachedPrincipal();
+
     // Redirect to Azure App Service Easy Auth logout
     // This will clear the Easy Auth session and redirect
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      window.location.href = '/login';
+    } else {
       window.location.href = '/.auth/logout';
     }
   }

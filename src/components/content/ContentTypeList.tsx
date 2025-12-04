@@ -11,7 +11,9 @@ import {
   DocumentTextIcon,
   PlusIcon,
   EyeIcon,
-  PencilIcon,
+  CalendarIcon,
+  CubeIcon,
+  // PencilIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -205,87 +207,158 @@ export default function ContentTypeList() {
     );
   }
 
+  const getContentTypeColor = (contentType: ContentType): string => {
+    const colors = [
+      'from-blue-500 to-cyan-500',
+      'from-purple-500 to-pink-500',
+      'from-indigo-500 to-purple-500',
+      'from-green-500 to-emerald-500',
+      'from-orange-500 to-red-500',
+      'from-teal-500 to-blue-500',
+      'from-pink-500 to-rose-500',
+      'from-yellow-500 to-orange-500',
+    ];
+    // Use content type ID to consistently assign a color
+    const index = parseInt(contentType.id) % colors.length;
+    return colors[index] || colors[0];
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Content Types</h1>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Content Types</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage and organize your content structure
+          </p>
+        </div>
         {!isViewer && (
           <button
             onClick={handleCreateClick}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-5 w-5 mr-2" />
             Create Content Type
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {contentTypes.map((contentType) => (
-          <div key={contentType.id} className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <DocumentTextIcon className="h-8 w-8 text-indigo-600" />
-                </div>
-                <div className="ml-4 flex-1">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {contentType.displayName}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {contentType.name}
-                  </p>
-                </div>
-              </div>
-
-              {contentType.description && (
-                <p className="mt-2 text-sm text-gray-600">
-                  {contentType.description}
-                </p>
-              )}
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-xs text-gray-500">
-                  Created {formatDate(contentType.createdAt)}
-                </div>
-                <div className="flex space-x-2">
-                  <Link
-                    href={`/content-manager/${contentType.pluralName || contentType.name}`}
-                    className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    <EyeIcon className="h-3 w-3 mr-1" />
-                    View
-                  </Link>
-                  {!isViewer && (
-                    <Link
-                      href={`/content-builder/${contentType.pluralName || contentType.name}`}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      <PencilIcon className="h-3 w-3 mr-1" />
-                      Edit
-                    </Link>
-                  )}
-                </div>
-              </div>
+      {/* Statistics Bar */}
+      {contentTypes.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center">
+              <CubeIcon className="h-5 w-5 text-indigo-600 mr-2" />
+              <span className="text-sm font-medium text-gray-700">
+                <span className="text-indigo-600">{contentTypes.length}</span> content type{contentTypes.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
+              <span className="text-sm text-gray-500">
+                {contentTypes.filter(ct => ct.kind === 'collectionType').length} collection type{contentTypes.filter(ct => ct.kind === 'collectionType').length !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {contentTypes.length === 0 && (
-        <div className="text-center py-12">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No content types</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new content type.</p>
-          <div className="mt-6">
-            <button
-              onClick={handleCreateClick}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+      {/* Content Types Grid */}
+      {contentTypes.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {contentTypes.map((contentType) => (
+            <div
+              key={contentType.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 overflow-hidden"
             >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create Content Type
-            </button>
-          </div>
+              {/* Card Header with Gradient */}
+              <div className={`bg-gradient-to-r ${getContentTypeColor(contentType)} px-6 py-6`}>
+                <div className="flex items-center space-x-4">
+                  <div className="h-14 w-14 rounded-full flex items-center justify-center shadow-xl border-2 border-white border-opacity-40">
+                    <DocumentTextIcon className="h-7 w-7 text-white drop-shadow-lg" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-white truncate">
+                      {contentType.displayName}
+                    </h3>
+                    <p className="text-sm text-white text-opacity-90 truncate">
+                      {contentType.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Body */}
+              <div className="p-6">
+                {contentType.description ? (
+                  <p className="text-sm text-gray-600 mb-4" style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {contentType.description}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic mb-4">
+                    No description provided
+                  </p>
+                )}
+
+                {/* Type Badge */}
+                {contentType.kind && (
+                  <div className="mb-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${contentType.kind === 'collectionType'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-purple-100 text-purple-800'
+                      }`}>
+                      <CubeIcon className="h-3 w-3 mr-1.5" />
+                      {contentType.kind === 'collectionType' ? 'Collection Type' : 'Single Type'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Metadata */}
+                <div className="flex items-center text-xs text-gray-500 space-x-4">
+                  <div className="flex items-center">
+                    <CalendarIcon className="h-4 w-4 mr-1" />
+                    <span>Created {formatDate(contentType.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <Link
+                  href={`/content-manager/${contentType.pluralName || contentType.name}`}
+                  className="inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                >
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                  View Content
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
+          <DocumentTextIcon className="mx-auto h-16 w-16 text-gray-300" />
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No content types</h3>
+          <p className="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
+            Get started by creating your first content type to organize your content structure.
+          </p>
+          {!isViewer && (
+            <div className="mt-6">
+              <button
+                onClick={handleCreateClick}
+                className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              >
+                <PlusIcon className="h-5 w-5 mr-2" />
+                Create Content Type
+              </button>
+            </div>
+          )}
         </div>
       )}
 

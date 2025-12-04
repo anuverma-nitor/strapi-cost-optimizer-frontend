@@ -2,15 +2,18 @@ import Layout from '@/components/ui/Layout';
 import ContentItemList from '@/components/content/ContentItemList';
 
 interface ContentTypePageProps {
-  params: {
+  params: Promise<{
     contentType: string;
-  };
+  }>;
 }
 
-export default function ContentTypePage({ params }: ContentTypePageProps) {
+export default async function ContentTypePage(props: ContentTypePageProps) {
+  const params = await props.params;
+  const { contentType } = params;
+
   return (
     <Layout>
-      <ContentItemList contentType={params.contentType} />
+      <ContentItemList contentType={contentType} />
     </Layout>
   );
 }

@@ -23,6 +23,7 @@ export interface ContentType {
   pluralName?: string;
   displayName: string;
   description?: string;
+  kind?: 'collectionType' | 'singleType';
   attributes: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;

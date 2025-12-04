@@ -7,11 +7,13 @@ import { contentAPI } from '@/lib/api';
 import { formatDate, truncateText } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/roles';
+import AccessDenied from '@/components/ui/AccessDenied';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 
 interface ContentItemListProps {
@@ -26,6 +28,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isForbidden, setIsForbidden] = useState(false);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
   const [ownershipMap, setOwnershipMap] = useState<Record<string, boolean>>({});
 
@@ -38,6 +41,7 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
     try {
       setLoading(true);
       setError('');
+      setIsForbidden(false);
       // This now calls your custom backend API
       const response = await contentAPI.getContentItems(contentType);
       console.log('getContentItems response..........................', response);
@@ -78,7 +82,15 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
     } catch (err: any) {
       const errorMessage = err?.message || err?.response?.data?.message || 'Failed to fetch content items';
       const statusCode = err?.statusCode || err?.response?.status;
-      setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
+
+      // Check if it's a 403 Forbidden error
+      if (statusCode === 403) {
+        setIsForbidden(true);
+        setError('');
+      } else {
+        setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
+        setIsForbidden(false);
+      }
       console.error('Error fetching content items:', err);
       setContentItems([]); // Set empty array on error
     } finally {
@@ -224,6 +236,17 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
     );
   }
 
+  // Show access denied page for 403 errors
+  if (isForbidden) {
+    return (
+      <AccessDenied
+        contentType={contentType}
+        viewButtonHref="/content-manager"
+        viewButtonText="View Content Manager"
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
@@ -234,24 +257,31 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 capitalize">
-          {contentType.replace('-', ' ')} Content
-        </h1>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 capitalize">
+            {contentType.replace('-', ' ')} Content
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage and organize your {contentType.replace('-', ' ')} content
+          </p>
+        </div>
         {!isViewer && (
           <Link
             href={`/content-builder/${contentType}/new`}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <PlusIcon className="h-5 w-5 mr-2" />
             Create New
           </Link>
         )}
       </div>
 
+      {/* Bulk Actions Bar */}
       {contentItems && contentItems.length > 0 && (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="px-4 py-3 border-b border-gray-200">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -259,113 +289,239 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                 onChange={handleSelectAll}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <span className="ml-2 text-sm text-gray-600">
-                {selectedItems.length} of {contentItems.length} selected
+              <span className="ml-3 text-sm font-medium text-gray-700">
+                {selectedItems.length > 0 ? (
+                  <span className="text-indigo-600">{selectedItems.length}</span>
+                ) : (
+                  <span className="text-gray-500">{contentItems.length}</span>
+                )}{' '}
+                {selectedItems.length === 1 ? 'item' : 'items'}{' '}
+                {selectedItems.length > 0 ? 'selected' : 'total'}
               </span>
-              {selectedItems.length > 0 && !isViewer && (
-                <div className="ml-4 flex space-x-2">
-                  <button
-                    onClick={handleDeleteSelected}
-                    className="text-sm text-red-600 hover:text-red-900 font-medium"
-                  >
-                    Delete Selected ({selectedItems.length})
-                  </button>
-                </div>
-              )}
             </div>
+            {selectedItems.length > 0 && !isViewer && (
+              <button
+                onClick={handleDeleteSelected}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+              >
+                <TrashIcon className="h-4 w-4 mr-2" />
+                Delete Selected
+              </button>
+            )}
           </div>
-
-          <ul className="divide-y divide-gray-200">
-            {contentItems.map((item) => (
-              <li key={item.id} className="hover:bg-gray-50">
-                <div className="px-4 py-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(item.id)}
-                      onChange={() => handleSelectItem(item.id)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                    />
-                    <div className="ml-4 flex-1">
-                      <div className="flex items-center">
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {(item.name || item.title || `Item ${item.id}`) as React.ReactNode}
-                        </h3>
-                        {!item.publishedAt && (
-                          <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Draft
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {truncateText(
-                          typeof item.content === 'string'
-                            ? item.content
-                            : typeof item.description === 'string'
-                            ? item.description
-                            : '',
-                          100
-                        )}
-                      </p>
-                      <div className="mt-1 text-xs text-gray-400">
-                        Updated {formatDate(item.updatedAt)}
-                        {item.publishedAt && (
-                          <span className="ml-2">• Published {formatDate(item.publishedAt)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    {!isViewer && (() => {
-                      const contentId = item.documentId || String(item.id);
-                      const canEdit = !isAuthor || ownershipMap[contentId] === true;
-
-                      if (isAuthor && !canEdit) {
-                        return null; // Author can't edit others' content
-                      }
-
-                      return (
-                        <>
-                          <Link
-                            href={`/content-builder/${contentType}/${item.documentId}`}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="Edit"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Link>
-                          {(isAdmin || (isAuthor && canEdit)) && (
-                            <button
-                              onClick={() => handleDelete(item.documentId)}
-                              className="text-gray-400 hover:text-red-600"
-                              title="Delete"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
+      {/* Table */}
+      {contentItems && contentItems.length > 0 && (
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="w-12 px-6 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={contentItems.length > 0 && selectedItems.length === contentItems.length}
+                      onChange={handleSelectAll}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created By
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <EyeIcon className="h-4 w-4 inline-block mr-1" />
+                    View
+                  </th>
+                  {!isViewer && (
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <PencilIcon className="h-4 w-4 inline-block mr-1" />
+                      Edit
+                    </th>
+                  )}
+                  {!isViewer && (
+                    <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {contentItems.map((item) => {
+                  const contentId = item.documentId || String(item.id);
+                  const canEdit = !isAuthor || ownershipMap[contentId] === true;
+                  const isSelected = selectedItems.includes(item.id);
+                  const itemTitle = (item.name || item.title || `Item ${item.id}`) as string;
+                  const itemDescription = truncateText(
+                    typeof item.content === 'string'
+                      ? item.content
+                      : typeof item.description === 'string'
+                        ? item.description
+                        : '',
+                    100
+                  );
+
+                  // Get createdBy information - could be createdBy, author, or user
+                  const createdBy = item.createdBy
+                    ? (typeof item.createdBy === 'object'
+                      ? (item.createdBy as { username?: string; email?: string; name?: string })?.username
+                      || (item.createdBy as { username?: string; email?: string; name?: string })?.email
+                      || (item.createdBy as { username?: string; email?: string; name?: string })?.name
+                      || 'Unknown'
+                      : String(item.createdBy))
+                    : item.author
+                      ? (typeof item.author === 'object'
+                        ? (item.author as { username?: string; email?: string; name?: string })?.username
+                        || (item.author as { username?: string; email?: string; name?: string })?.email
+                        || (item.author as { username?: string; email?: string; name?: string })?.name
+                        || 'Unknown'
+                        : String(item.author))
+                      : 'N/A';
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-indigo-50' : ''}`}
+                    >
+                      {/* Checkbox */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectItem(item.id)}
+                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                      </td>
+
+                      {/* Name */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className="text-sm font-medium text-gray-900">
+                              {itemTitle}
+                            </div>
+                            {!item.publishedAt && (
+                              <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Draft
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Description */}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600 max-w-md">
+                          {itemDescription || <span className="text-gray-400">No description</span>}
+                        </div>
+                      </td>
+
+                      {/* Created By */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {createdBy}
+                        </div>
+                      </td>
+
+                      {/* Created Date */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {formatDate(item.createdAt)}
+                        </div>
+                        {item.publishedAt && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Published: {formatDate(item.publishedAt)}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* View Icon */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <Link
+                          href={`/content-builder/${contentType}/${contentId}`}
+                          className="inline-flex items-center justify-center text-indigo-600 hover:text-indigo-900 transition-colors cursor-pointer"
+                          title="View"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </Link>
+                      </td>
+
+                      {/* Edit Icon */}
+                      {!isViewer && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {(() => {
+                            if (isAuthor && !canEdit) {
+                              return (
+                                <span className="text-gray-300 cursor-not-allowed" title="You can only edit your own content">
+                                  <PencilIcon className="h-5 w-5" />
+                                </span>
+                              );
+                            }
+                            return (
+                              <Link
+                                href={`/content-builder/${contentType}/${contentId}`}
+                                className="inline-flex items-center justify-center text-gray-600 hover:text-indigo-600 transition-colors cursor-pointer"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </Link>
+                            );
+                          })()}
+                        </td>
+                      )}
+
+                      {/* Delete Action */}
+                      {!isViewer && (
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          {isAdmin || (isAuthor && canEdit) ? (
+                            <button
+                              onClick={() => handleDelete(contentId)}
+                              className="inline-flex items-center justify-center text-red-600 hover:text-red-900 transition-colors cursor-pointer"
+                              title="Delete"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          ) : (
+                            <span className="text-gray-300">
+                              <TrashIcon className="h-5 w-5" />
+                            </span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
       {(!contentItems || contentItems.length === 0) && !loading && (
-        <div className="text-center py-12">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No content found</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new {contentType}.</p>
+        <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
+          <DocumentTextIcon className="mx-auto h-16 w-16 text-gray-300" />
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No content found</h3>
+          <p className="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
+            Get started by creating your first {contentType.replace('-', ' ')} content item.
+          </p>
           {!isViewer && (
             <div className="mt-6">
               <Link
                 href={`/content-builder/${contentType}/new`}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
               >
-                <PlusIcon className="h-4 w-4 mr-2" />
+                <PlusIcon className="h-5 w-5 mr-2" />
                 Create New {contentType.charAt(0).toUpperCase() + contentType.slice(1)}
               </Link>
             </div>

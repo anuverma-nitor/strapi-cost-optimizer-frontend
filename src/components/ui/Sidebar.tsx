@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  HomeIcon, 
-  DocumentTextIcon, 
-  CogIcon, 
+import {
+  HomeIcon,
+  DocumentTextIcon,
+  CogIcon,
   UserGroupIcon,
   Bars3Icon,
   XMarkIcon
@@ -17,7 +17,7 @@ import { getRoleDisplayName } from '@/types/roles';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Content Manager', href: '/content-manager', icon: DocumentTextIcon },
-  { name: 'Content Builder', href: '/content-builder', icon: CogIcon },
+  // { name: 'Content Builder', href: '/content-builder', icon: CogIcon },
   { name: 'Users', href: '/users', icon: UserGroupIcon },
 ];
 
@@ -56,11 +56,10 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    isActive
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${isActive
                       ? 'bg-indigo-100 text-indigo-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   {item.name}
@@ -79,8 +78,8 @@ export default function Sidebar() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {user?.firstname && user?.lastname 
-                    ? `${user.firstname} ${user.lastname}` 
+                  {user?.firstname && user?.lastname
+                    ? `${user.firstname} ${user.lastname}`
                     : user?.username || 'User'
                   }
                 </p>
@@ -113,11 +112,10 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                    isActive
+                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${isActive
                       ? 'bg-indigo-100 text-indigo-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
                   {item.name}
@@ -136,8 +134,8 @@ export default function Sidebar() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {user?.firstname && user?.lastname 
-                    ? `${user.firstname} ${user.lastname}` 
+                  {user?.firstname && user?.lastname
+                    ? `${user.firstname} ${user.lastname}`
                     : user?.username || 'User'
                   }
                 </p>

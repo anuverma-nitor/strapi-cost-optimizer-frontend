@@ -1,5 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
+import { addEasyAuthHeader } from './easyAuthHeaders';
+
 
 interface DashboardStats {
   contentTypes: {
@@ -34,7 +36,8 @@ class DashboardAPI {
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
+    console.log("this.baseURL", this.baseURL)
+
     this.api = axios.create({
       baseURL: this.baseURL,
       headers: {
@@ -43,8 +46,9 @@ class DashboardAPI {
     });
 
     // Add request interceptor to include auth token and check expiry
-    this.api.interceptors.request.use((config) => {
+    this.api.interceptors.request.use(async (config) => {
       const token = localStorage.getItem('auth_token');
+
       if (token) {
         if (isTokenExpired(token)) {
           console.warn('[DashboardAPI] Token expired, clearing auth and redirecting to login');
@@ -53,6 +57,9 @@ class DashboardAPI {
         }
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // Add x-ms-client-principal header for Easy Auth
+      await addEasyAuthHeader(config);
       return config;
     });
 
@@ -70,8 +77,8 @@ class DashboardAPI {
           const errorData = error.response.data;
           // Extract message from NestJS error format or Strapi error format
           if (errorData.message) {
-            error.message = Array.isArray(errorData.message) 
-              ? errorData.message.join(', ') 
+            error.message = Array.isArray(errorData.message)
+              ? errorData.message.join(', ')
               : errorData.message;
           }
           // Preserve status code
@@ -84,7 +91,7 @@ class DashboardAPI {
 
   async getStats(): Promise<DashboardStats> {
     const response: AxiosResponse<DashboardStats> = await this.api.get('/api/dashboard/stats');
-    console.log('api/dashboard/stats response..........................',response);
+    console.log('api/dashboard/stats response..........................', response);
     return response.data;
   }
 

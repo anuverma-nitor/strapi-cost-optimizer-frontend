@@ -2,18 +2,20 @@ import Layout from '@/components/ui/Layout';
 import ContentBuilder from '@/components/content/ContentBuilder';
 
 interface ContentBuilderPageProps {
-  params: {
+  params: Promise<{
     contentType: string;
     contentId: string;
-  };
+  }>;
 }
 
-export default function ContentBuilderPage({ params }: ContentBuilderPageProps) {
+export default async function ContentBuilderPage({ params }: ContentBuilderPageProps) {
+  const { contentType, contentId } = await params;
+  
   return (
     <Layout>
       <ContentBuilder 
-        contentType={params.contentType} 
-        contentId={params.contentId === 'new' ? undefined : params.contentId} 
+        contentType={contentType} 
+        contentId={contentId === 'new' ? undefined : contentId} 
       />
     </Layout>
   );

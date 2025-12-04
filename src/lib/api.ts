@@ -1,16 +1,15 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ContentType, ContentItem, ApiResponse } from '@/types';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
+import { addEasyAuthHeader } from './easyAuthHeaders';
 
 class ContentAPI {
   private api: AxiosInstance;
   private baseURL: string;
 
   constructor() {
-    // ALL API calls go to your custom backend
-    // NO Strapi references in the frontend
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
+
     // API client for content management
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -20,7 +19,7 @@ class ContentAPI {
     });
 
     // Add request interceptor to include auth token and check expiry
-    this.api.interceptors.request.use((config) => {
+    this.api.interceptors.request.use(async (config) => {
       const token = localStorage.getItem('auth_token');
       if (token) {
         // Check if token is expired before making request
@@ -31,6 +30,10 @@ class ContentAPI {
         }
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      // Add x-ms-client-principal header for Easy Auth
+      await addEasyAuthHeader(config);
+
       return config;
     });
 
@@ -48,8 +51,8 @@ class ContentAPI {
           const errorData = error.response.data;
           // Extract message from NestJS error format or Strapi error format
           if (errorData.message) {
-            error.message = Array.isArray(errorData.message) 
-              ? errorData.message.join(', ') 
+            error.message = Array.isArray(errorData.message)
+              ? errorData.message.join(', ')
               : errorData.message;
           }
           // Preserve status code
@@ -85,13 +88,13 @@ class ContentAPI {
   // Content methods - calls to your custom backend
   async getContentItems(contentType: string, params?: Record<string, unknown>): Promise<ApiResponse<ContentItem[]>> {
     // Backend will automatically add 'status': 'draft' to include both published and draft content
-    const queryParams = params 
+    const queryParams = params
       ? new URLSearchParams(
-          Object.entries(params).reduce((acc, [key, value]) => {
-            acc[key] = String(value ?? '');
-            return acc;
-          }, {} as Record<string, string>)
-        ).toString()
+        Object.entries(params).reduce((acc, [key, value]) => {
+          acc[key] = String(value ?? '');
+          return acc;
+        }, {} as Record<string, string>)
+      ).toString()
       : '';
     const url = queryParams ? `/api/${contentType}?${queryParams}` : `/api/${contentType}`;
     const response: AxiosResponse<ApiResponse<ContentItem[]>> = await this.api.get(url);

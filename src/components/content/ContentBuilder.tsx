@@ -36,8 +36,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm();
 
   useEffect(() => {
-    // Redirect Viewer users away from create/edit pages
-    if (isViewer) {
+    // Redirect Viewer users away from create pages (they can only view existing content)
+    if (isViewer && (!contentId || contentId === 'new')) {
       router.push(`/content-manager/${contentType}`);
       return;
     }
@@ -125,6 +125,11 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
   };
 
   const onSubmit = async (data: any) => {
+    // Prevent submission for viewers
+    if (isViewer) {
+      return;
+    }
+
     try {
       setSaving(true);
       setError('');
@@ -199,7 +204,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
               {...register(fieldName, { required: isRequired })}
               type="text"
               defaultValue={fieldValue || ''} // Show default value from form state
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={`Enter ${fieldName}`}
             />
             {errors[fieldName] && (
@@ -219,7 +225,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
               {...register(fieldName, { required: isRequired })}
               rows={4}
               defaultValue={fieldValue || ''} // Show default value from form state
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={`Enter ${fieldName}`}
             />
             {errors[fieldName] && (
@@ -239,7 +246,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
               {...register(fieldName, { required: isRequired })}
               rows={8}
               defaultValue={fieldValue || ''} // Show default value from form state
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={`Enter ${fieldName}`}
             />
             {errors[fieldName] && (
@@ -261,7 +269,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
               type="number"
               step={fieldType === 'decimal' ? '0.01' : '1'}
               defaultValue={fieldValue !== undefined && fieldValue !== null ? fieldValue : ''} // Show default value
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={`Enter ${fieldName}`}
             />
             {errors[fieldName] && (
@@ -278,7 +287,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
                 {...register(fieldName)}
                 type="checkbox"
                 defaultChecked={fieldValue === true} // Show default checked state
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                disabled={isViewer}
+                className={`h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded ${isViewer ? 'cursor-not-allowed opacity-60' : ''}`}
               />
               <span className="ml-2 text-sm font-medium text-gray-700">
                 {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
@@ -298,7 +308,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
               {...register(fieldName, { required: isRequired })}
               type="datetime-local"
               defaultValue={fieldValue ? new Date(fieldValue).toISOString().slice(0, 16) : ''} // Convert ISO to datetime-local format
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             />
             {errors[fieldName] && (
               <p className="text-sm text-red-600">{String(errors[fieldName]?.message || '')}</p>
@@ -316,7 +327,8 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
             <input
               {...register(fieldName, { required: isRequired })}
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              disabled={isViewer}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 ${isViewer ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={`Enter ${fieldName}`}
             />
             {errors[fieldName] && (
@@ -356,7 +368,7 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {isNewItem ? 'Create New' : 'Edit'} {contentTypeSchema?.displayName || contentType}
+              {isNewItem ? 'Create New' : isViewer ? 'View' : 'Edit'} {contentTypeSchema?.displayName || contentType}
             </h1>
             {contentItem && (
               <p className="text-sm text-gray-500">
@@ -387,7 +399,12 @@ export default function ContentBuilder({ contentType, contentId }: ContentBuilde
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {!canEdit && !isNewItem && (
+        {isViewer && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md">
+            You are viewing this content in read-only mode. All fields are disabled.
+          </div>
+        )}
+        {!canEdit && !isNewItem && !isViewer && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
             You can only edit your own content. This content was created by another user.
           </div>
