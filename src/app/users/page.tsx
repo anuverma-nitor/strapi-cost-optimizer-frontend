@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Layout from '@/components/ui/Layout';
 import { customAuthAPI } from '@/lib/customAuthApi';
@@ -9,6 +10,7 @@ import { getRoleDisplayName, getRoleBadgeColor } from '@/types/roles';
 import { UserIcon, EnvelopeIcon, IdentificationIcon, CalendarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 export default function UsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,16 +30,16 @@ export default function UsersPage() {
         setUsers([]);
       }
     } catch (err: unknown) {
-      const errorMessage = err && typeof err === 'object' && 'message' in err 
+      const errorMessage = err && typeof err === 'object' && 'message' in err
         ? String((err as { message?: string }).message)
         : err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to fetch users'
-        : 'Failed to fetch users';
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to fetch users'
+          : 'Failed to fetch users';
       const statusCode = err && typeof err === 'object' && 'statusCode' in err
         ? (err as { statusCode?: number }).statusCode
         : err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { status?: number } }).response?.status
-        : undefined;
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
       setError(statusCode ? `Error ${statusCode}: ${errorMessage}` : errorMessage);
       console.error('Error fetching users:', err);
     } finally {
@@ -94,6 +96,7 @@ export default function UsersPage() {
     return user.username || 'Unknown User';
   };
 
+
   const getAvatarColor = (user: User): string => {
     const colors = [
       'bg-indigo-500',
@@ -110,6 +113,10 @@ export default function UsersPage() {
     return colors[index] || colors[0];
   };
 
+  const goToAddUser = () => {
+    router.push('/users/add');
+  }
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -125,6 +132,11 @@ export default function UsersPage() {
             <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm">
               <span className="text-sm font-medium text-gray-700">
                 Total: <span className="text-indigo-600">{users.length}</span> users
+              </span>
+            </div>
+            <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm">
+              <span className="text-sm font-medium text-gray-700">
+                <button className="text-indigo-600" onClick={goToAddUser}>Add User</button>
               </span>
             </div>
           </div>
