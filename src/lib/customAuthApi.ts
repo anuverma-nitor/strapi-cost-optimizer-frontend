@@ -2,7 +2,8 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { User, ApiResponse } from '@/types';
 import { AuthResponse, LoginCredentials, RegisterCredentials } from '@/types';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
-import { addEasyAuthHeader, clearCachedPrincipal } from './easyAuthHeaders';
+import { addNextAuthHeaders } from './nextAuthHeaders';
+import { signOut } from 'next-auth/react';
 
 class CustomAuthAPI {
   private api: AxiosInstance;
@@ -31,8 +32,9 @@ class CustomAuthAPI {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Add x-ms-client-principal header for Easy Auth
-      await addEasyAuthHeader(config);
+      // Add x-ms-client-principal headers from NextAuth cookies
+      // These headers are read by the backend from request.headers
+      addNextAuthHeaders(config);
 
       return config;
     });
@@ -79,16 +81,8 @@ class CustomAuthAPI {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
 
-    // Clear cached Azure Easy Auth principal
-    clearCachedPrincipal();
-
-    // Redirect to Azure App Service Easy Auth logout
-    // This will clear the Easy Auth session and redirect
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      window.location.href = '/login';
-    } else {
-      window.location.href = '/.auth/logout';
-    }
+    // Sign out from NextAuth (this will clear the session and cookies)
+    await signOut({ callbackUrl: '/login', redirect: true });
   }
 
   async getCurrentUser(): Promise<User> {
