@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ContentType, ContentItem, ApiResponse } from '@/types';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
-import { addEasyAuthHeader } from './easyAuthHeaders';
+import { addNextAuthHeaders } from './nextAuthHeaders';
 
 class ContentAPI {
   private api: AxiosInstance;
@@ -31,8 +31,9 @@ class ContentAPI {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      // Add x-ms-client-principal header for Easy Auth
-      await addEasyAuthHeader(config);
+      // Add x-ms-client-principal headers from NextAuth cookies
+      // These headers are read by the backend from request.headers
+      addNextAuthHeaders(config);
 
       return config;
     });
