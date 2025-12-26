@@ -16,14 +16,14 @@
  */
 function getPrincipalCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  
+
   const cookies = document.cookie.split(';');
   const principalCookie = cookies.find(c => c.trim().startsWith('x-ms-client-principal='));
-  
+
   if (principalCookie) {
     return decodeURIComponent(principalCookie.split('=')[1]);
   }
-  
+
   return null;
 }
 
@@ -71,6 +71,8 @@ export function addNextAuthHeaders(config: { headers?: Record<string, string> })
 
   // Get Azure Easy Auth cookies set by middleware
   const cookies = getAzureAuthCookies();
+
+  console.log('cookies', cookies);
 
   // Add x-ms-client-principal header (base64-encoded principal)
   if (cookies.principal) {

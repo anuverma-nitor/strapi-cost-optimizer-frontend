@@ -16,10 +16,12 @@ export default function LoginPage() {
       // Sign in with Microsoft Entra ID provider
       // After successful login, NextAuth will set the X-MS-CLIENT-PRINCIPAL cookie
       // via middleware with base64-encoded email
-      await signIn('microsoft-entra-id', {
+      const result = await signIn('microsoft-entra-id', {
         callbackUrl: '/dashboard',
         redirect: true,
       });
+      console.log('result', result);
+
     } catch (err) {
       console.error('Microsoft login error:', err);
       setError('Failed to sign in with Microsoft. Please try again.');
@@ -74,10 +76,10 @@ export default function LoginPage() {
                 ) : (
                   <>
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="0" y="0" width="11" height="11" fill="#F25022"/>
-                      <rect x="12" y="0" width="11" height="11" fill="#7FBA00"/>
-                      <rect x="0" y="12" width="11" height="11" fill="#00A4EF"/>
-                      <rect x="12" y="12" width="11" height="11" fill="#FFB900"/>
+                      <rect x="0" y="0" width="11" height="11" fill="#F25022" />
+                      <rect x="12" y="0" width="11" height="11" fill="#7FBA00" />
+                      <rect x="0" y="12" width="11" height="11" fill="#00A4EF" />
+                      <rect x="12" y="12" width="11" height="11" fill="#FFB900" />
                     </svg>
                     Sign in with Microsoft
                   </>

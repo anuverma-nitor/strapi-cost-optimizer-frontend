@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  TrashIcon, 
+import {
+  TrashIcon,
   PlusIcon,
   ChevronDownIcon,
   ChevronUpIcon
@@ -55,6 +55,7 @@ const FIELD_TYPES = [
   { value: 'relation', label: 'Relation' },
   { value: 'component', label: 'Component' },
   { value: 'dynamiczone', label: 'Dynamic Zone' },
+  { value: 'blocks', label: 'Blocks (Rich Text)' },
 ];
 
 export default function FieldBuilder({ fields, onFieldsChange }: FieldBuilderProps) {
@@ -122,32 +123,32 @@ export default function FieldBuilder({ fields, onFieldsChange }: FieldBuilderPro
         </div>
 
         {/* Default Value */}
-        {(fieldType === 'string' || fieldType === 'text' || fieldType === 'integer' || 
+        {(fieldType === 'string' || fieldType === 'text' || fieldType === 'integer' ||
           fieldType === 'biginteger' || fieldType === 'float' || fieldType === 'decimal' || fieldType === 'boolean') && (
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Default Value
-            </label>
-            <input
-              type={fieldType === 'boolean' ? 'checkbox' : fieldType.includes('integer') || fieldType === 'float' || fieldType === 'decimal' ? 'number' : 'text'}
-              value={field.default !== undefined ? String(field.default) : ''}
-              onChange={(e) => {
-                let value: string | number | boolean | undefined = e.target.value;
-                if (fieldType === 'boolean') {
-                  value = e.target.checked;
-                } else if (fieldType === 'integer' || fieldType === 'biginteger') {
-                  value = value ? parseInt(value) : undefined;
-                } else if (fieldType === 'float' || fieldType === 'decimal') {
-                  value = value ? parseFloat(value) : undefined;
-                }
-                updateField(index, { default: value || undefined });
-              }}
-              checked={fieldType === 'boolean' ? field.default === true : undefined}
-              className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Default value (optional)"
-            />
-          </div>
-        )}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Default Value
+              </label>
+              <input
+                type={fieldType === 'boolean' ? 'checkbox' : fieldType.includes('integer') || fieldType === 'float' || fieldType === 'decimal' ? 'number' : 'text'}
+                value={field.default !== undefined ? String(field.default) : ''}
+                onChange={(e) => {
+                  let value: string | number | boolean | undefined = e.target.value;
+                  if (fieldType === 'boolean') {
+                    value = e.target.checked;
+                  } else if (fieldType === 'integer' || fieldType === 'biginteger') {
+                    value = value ? parseInt(value) : undefined;
+                  } else if (fieldType === 'float' || fieldType === 'decimal') {
+                    value = value ? parseFloat(value) : undefined;
+                  }
+                  updateField(index, { default: value || undefined });
+                }}
+                checked={fieldType === 'boolean' ? field.default === true : undefined}
+                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Default value (optional)"
+              />
+            </div>
+          )}
 
         {/* String/Text specific */}
         {(fieldType === 'string' || fieldType === 'text' || fieldType === 'richtext') && (

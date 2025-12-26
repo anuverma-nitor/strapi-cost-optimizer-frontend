@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
 import { addNextAuthHeaders } from './nextAuthHeaders';
+import { getCachedSession } from './sessionCache';
 
 
 interface DashboardStats {
@@ -36,7 +37,6 @@ class DashboardAPI {
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    console.log("this.baseURL", this.baseURL)
 
     this.api = axios.create({
       baseURL: this.baseURL,
@@ -47,15 +47,12 @@ class DashboardAPI {
 
     // Add request interceptor to include auth token and check expiry
     this.api.interceptors.request.use(async (config) => {
-      const token = localStorage.getItem('auth_token');
 
-      if (token) {
-        if (isTokenExpired(token)) {
-          console.warn('[DashboardAPI] Token expired, clearing auth and redirecting to login');
-          clearAuthAndRedirect('Your session has expired. Please log in again.');
-          return Promise.reject(new Error('Token expired'));
-        }
-        config.headers.Authorization = `Bearer ${token}`;
+      // Get JWT from cached NextAuth session (prevents multiple /api/auth/session calls)
+      const session = await getCachedSession();
+
+      if (session?.backendJwt) {
+        config.headers.Authorization = `Bearer ${session.backendJwt}`;
       }
 
       // Add x-ms-client-principal headers from NextAuth cookies

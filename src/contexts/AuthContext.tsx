@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthResponse } from '@/types';
 import { customAuthAPI } from '@/lib/customAuthApi';
 import { UserRole } from '@/types/roles';
+import { useSession } from 'next-auth/react';
 
 interface AuthContextType {
   user: User | null;
@@ -21,17 +22,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 Get NextAuth session
+  const { data: session, status } = useSession();
+
   useEffect(() => {
+    // 🔥 Check NextAuth session FIRST (Microsoft login)
+    if (status === 'loading') {
+      return; // Still loading session
+    }
+
+    if (session?.backendJwt && session?.backendUser) {
+      // User logged in via Microsoft
+      setToken(session.backendJwt);
+      setUser(session.backendUser as unknown as User);
+      setLoading(false);
+      return;
+    }
+
     // Check for existing auth on mount
     const storedToken = localStorage.getItem('auth_token');
     const storedUser = localStorage.getItem('auth_user');
-    
+
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
     }
     setLoading(false);
-  }, []);
+  }, [session, status]);
 
   const login = async (identifier: string, password: string) => {
     try {
@@ -48,11 +65,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (username: string, email: string, password: string, firstname?: string, lastname?: string, role?: UserRole) => {
     try {
-      const response: AuthResponse = await customAuthAPI.register({ 
-        username, 
-        email, 
-        password, 
-        firstname, 
+      const response: AuthResponse = await customAuthAPI.register({
+        username,
+        email,
+        password,
+        firstname,
         lastname,
         role: role || UserRole.VIEWER,
       });

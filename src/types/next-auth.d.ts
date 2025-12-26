@@ -13,6 +13,13 @@ declare module 'next-auth' {
     principal?: string; // Base64-encoded X-MS-CLIENT-PRINCIPAL value
     email?: string;
     name?: string;
+    backendJwt?: string;
+    backendUser?: {
+      id: number;
+      email: string;
+      role: string;
+      // add other user fields
+    };
   }
 }
 

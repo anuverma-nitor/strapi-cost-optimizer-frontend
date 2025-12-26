@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { getCachedSession } from './sessionCache';
 import { ContentType, ContentItem, ApiResponse } from '@/types';
 import { isTokenExpired, clearAuthAndRedirect } from './utils';
 import { addNextAuthHeaders } from './nextAuthHeaders';
@@ -20,15 +21,12 @@ class ContentAPI {
 
     // Add request interceptor to include auth token and check expiry
     this.api.interceptors.request.use(async (config) => {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        // Check if token is expired before making request
-        if (isTokenExpired(token)) {
-          console.warn('[ContentAPI] Token expired, clearing auth and redirecting to login');
-          clearAuthAndRedirect('Your session has expired. Please log in again.');
-          return Promise.reject(new Error('Token expired'));
-        }
-        config.headers.Authorization = `Bearer ${token}`;
+
+      // Get JWT from cached NextAuth session (prevents multiple /api/auth/session calls)
+      const session = await getCachedSession();
+
+      if (session?.backendJwt) {
+        config.headers.Authorization = `Bearer ${session.backendJwt}`;
       }
 
       // Add x-ms-client-principal headers from NextAuth cookies

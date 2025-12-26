@@ -175,9 +175,9 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            {/* <p className="mt-1 text-sm text-gray-500">
               Welcome to your admin panel. Here&apos;s what&apos;s happening with your content.
-            </p>
+            </p> */}
           </div>
         </div>
 
@@ -395,7 +395,7 @@ export default function DashboardPage() {
                     </svg>
                   </div>
                 </Link>
-                <Link
+                {/* <Link
                   href="/content-builder"
                   className="group flex items-center px-4 py-4 bg-white rounded-lg text-sm font-medium text-gray-700 hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-gray-200 hover:border-purple-300"
                 >
@@ -411,8 +411,8 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                </Link>
-                <Link
+                </Link> */}
+                {/* <Link
                   href="/users"
                   className="group flex items-center px-4 py-4 bg-white rounded-lg text-sm font-medium text-gray-700 hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-gray-200 hover:border-green-300"
                 >
@@ -428,7 +428,7 @@ export default function DashboardPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>

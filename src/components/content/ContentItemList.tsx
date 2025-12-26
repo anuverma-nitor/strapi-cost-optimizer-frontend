@@ -330,12 +330,12 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Description
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  </th> */}
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created By
-                  </th>
+                  </th> */}
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created Date
                   </th>
@@ -362,31 +362,31 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                   const canEdit = !isAuthor || ownershipMap[contentId] === true;
                   const isSelected = selectedItems.includes(item.id);
                   const itemTitle = (item.name || item.title || `Item ${item.id}`) as string;
-                  const itemDescription = truncateText(
-                    typeof item.content === 'string'
-                      ? item.content
-                      : typeof item.description === 'string'
-                        ? item.description
-                        : '',
-                    100
-                  );
+                  // const itemDescription = truncateText(
+                  //   typeof item.content === 'string'
+                  //     ? item.content
+                  //     : typeof item.description === 'string'
+                  //       ? item.description
+                  //       : '',
+                  //   100
+                  // );
 
                   // Get createdBy information - could be createdBy, author, or user
-                  const createdBy = item.createdBy
-                    ? (typeof item.createdBy === 'object'
-                      ? (item.createdBy as { username?: string; email?: string; name?: string })?.username
-                      || (item.createdBy as { username?: string; email?: string; name?: string })?.email
-                      || (item.createdBy as { username?: string; email?: string; name?: string })?.name
-                      || 'Unknown'
-                      : String(item.createdBy))
-                    : item.author
-                      ? (typeof item.author === 'object'
-                        ? (item.author as { username?: string; email?: string; name?: string })?.username
-                        || (item.author as { username?: string; email?: string; name?: string })?.email
-                        || (item.author as { username?: string; email?: string; name?: string })?.name
-                        || 'Unknown'
-                        : String(item.author))
-                      : 'N/A';
+                  // const createdBy = item.createdBy
+                  //   ? (typeof item.createdBy === 'object'
+                  //     ? (item.createdBy as { username?: string; email?: string; name?: string })?.username
+                  //     || (item.createdBy as { username?: string; email?: string; name?: string })?.email
+                  //     || (item.createdBy as { username?: string; email?: string; name?: string })?.name
+                  //     || 'Unknown'
+                  //     : String(item.createdBy))
+                  //   : item.author
+                  //     ? (typeof item.author === 'object'
+                  //       ? (item.author as { username?: string; email?: string; name?: string })?.username
+                  //       || (item.author as { username?: string; email?: string; name?: string })?.email
+                  //       || (item.author as { username?: string; email?: string; name?: string })?.name
+                  //       || 'Unknown'
+                  //       : String(item.author))
+                  //     : 'N/A';
 
                   return (
                     <tr
@@ -420,29 +420,29 @@ export default function ContentItemList({ contentType }: ContentItemListProps) {
                       </td>
 
                       {/* Description */}
-                      <td className="px-6 py-4">
+                      {/* <td className="px-6 py-4">
                         <div className="text-sm text-gray-600 max-w-md">
                           {itemDescription || <span className="text-gray-400">No description</span>}
                         </div>
-                      </td>
+                      </td> */}
 
                       {/* Created By */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {createdBy}
                         </div>
-                      </td>
+                      </td> */}
 
                       {/* Created Date */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {formatDate(item.createdAt)}
                         </div>
-                        {item.publishedAt && (
+                        {/* {item.publishedAt && (
                           <div className="text-xs text-gray-500 mt-1">
                             Published: {formatDate(item.publishedAt)}
                           </div>
-                        )}
+                        )} */}
                       </td>
 
                       {/* View Icon */}
